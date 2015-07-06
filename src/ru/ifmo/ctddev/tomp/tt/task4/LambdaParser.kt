@@ -1,6 +1,10 @@
 package ru.ifmo.ctddev.tomp.tt.task4
 
 import java.util.*
+import Lambda
+import Var
+import Lam
+import App
 
 class LambdaFormatException: RuntimeException()
 

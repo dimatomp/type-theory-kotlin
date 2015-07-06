@@ -1,6 +1,6 @@
 import java.util.*
 
-private abstract class Lambda() {
+public abstract class Lambda() {
     private var parent: Lambda = this
 
     protected fun get(): Lambda {
@@ -13,6 +13,20 @@ private abstract class Lambda() {
         val left = get()
         val right = o.get()
         left.parent = right
+    }
+
+    protected fun stepSave(): Lambda {
+        val result = step()
+        if (parent == this) {
+            unite(result)
+            get()
+        }
+        return result
+    }
+
+    public fun normalize(): Lambda {
+        while (get() != stepFarther());
+        return get()
     }
 
     protected abstract fun step(): Lambda
@@ -42,6 +56,7 @@ private abstract class Lambda() {
                 }
             }
         }
+        recurse(this)
         return answer
     }
 
@@ -87,21 +102,18 @@ public data class Var(val name: String): Lambda() {
 
 public data class Lam(val par: String, val expr: Lambda): Lambda() {
     override fun step(): Lambda = modify(par, expr.stepFarther())
-    fun modify(p: String, e: Lambda): Lambda = if (p == par && e == expr) this else Lam(p, e)
+
+    fun modify(p: String, e: Lambda): Lam = if (p == par && e == expr) this else Lam(p, e)
     override fun toString(): String = "\\$par.$expr"
 }
 
 public data class App(val fst: Lambda, val snd: Lambda): Lambda() {
     override fun step(): Lambda = if (fst is Lam) fst.expr.substitute(fst.par, snd) else {
-        val fStep = fst.step()
-        if (fst.get() == fst) {
-            fst.unite(fst.step())
-            fst.get()
-        }
-        if (fStep is Lam) App(fStep, snd).step() else modify(fStep, snd.stepFarther())
+        val fStep = fst.stepSave()
+        if (fStep is Lam) App(fStep, snd).stepFarther() else modify(fStep, snd.stepFarther())
     }
 
-    fun modify(f: Lambda, s: Lambda): Lambda = if (f == fst && s == snd) this else App(f, s)
+    fun modify(f: Lambda, s: Lambda): App = if (f == fst && s == snd) this else App(f, s)
 
     override fun toString(): String {
         val fSubst = if (fst is Lam) "($fst)" else fst.toString()
