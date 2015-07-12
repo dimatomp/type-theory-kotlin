@@ -110,7 +110,7 @@ public data class Lam(val par: String, val expr: Lambda): Lambda() {
 public data class App(val fst: Lambda, val snd: Lambda): Lambda() {
     override fun step(): Lambda = if (fst is Lam) fst.expr.substitute(fst.par, snd) else {
         val fStep = fst.stepFarther()
-        if (fst == fStep) modify(fst, snd.normalize()) else modify(fStep, snd)
+        if (fst == fStep) modify(fst, snd.stepFarther()) else modify(fStep, snd)
     }
 
     fun modify(f: Lambda, s: Lambda): App = if (f == fst && s == snd) this else App(f, s)
